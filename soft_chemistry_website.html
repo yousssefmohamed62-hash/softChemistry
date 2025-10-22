@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soft Chemistry</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins",sans-serif; }
+body { background:#0b0c10; color:#66fcf1; overflow:hidden; }
+
+/* ---------- LOGIN ---------- */
+.center-box {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  text-align:center; background:rgba(0,0,0,0.7);
+  padding:30px 50px; border-radius:20px; box-shadow:0 0 30px #45a29e; z-index:10;
+}
+.center-box h1 { color:#45a29e; margin-bottom:20px; }
+.role-btns button, .center-box button {
+  background:#45a29e; border:none; color:#0b0c10;
+  padding:10px 20px; margin:10px; cursor:pointer; border-radius:8px; transition:0.3s;
+}
+button:hover { background:#66fcf1; }
+input[type="password"], input[type="file"], input[type="text"] {
+  padding:8px; border-radius:6px; border:2px solid #45a29e; background:transparent; color:#66fcf1; margin-bottom:10px;
+}
+
+/* ---------- HEADER ---------- */
+header {
+  background:rgba(0,0,0,0.8); padding:15px; text-align:center; position:fixed;
+  width:100%; top:0; z-index:5; box-shadow:0 0 15px #45a29e;
+}
+header h1 { margin-bottom:10px; font-size:2em; color:#45a29e; }
+nav ul { list-style:none; display:flex; justify-content:center; gap:30px; }
+nav a { color:#66fcf1; text-decoration:none; font-weight:bold; transition:0.3s; }
+nav a:hover, nav a.active { color:#45a29e; }
+
+main { margin-top:130px; text-align:center; position:relative; z-index:1; }
+.tab-content { display:none; animation:fadeIn 0.6s; }
+.tab-content.active { display:block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+footer { position:fixed; bottom:10px; width:100%; text-align:center; font-size:0.9em; color:#c5c6c7; z-index:2; }
+#atomCanvas { position:fixed; top:0; left:0; z-index:0; }
+</style>
+</head>
+<body>
+<canvas id="atomCanvas"></canvas>
+
+<div id="login-page" class="center-box">
+  <h1>Soft Chemistry Login</h1>
+  <div id="student-username-box" style="display:none;">
+    <p>Enter your username:</p>
+    <input type="text" id="studentUsername" placeholder="Username">
+  </div>
+  <p>Select your role:</p>
+  <div class="role-btns">
+    <button onclick="chooseRole('student')">Student</button>
+    <button onclick="chooseRole('teacher')">Teacher</button>
+  </div>
+  <div id="code-box" style="display:none;">
+    <p>Enter access code:</p>
+    <input type="password" id="accessCode" placeholder="Enter Code">
+    <button onclick="login()">Login</button>
+    <p id="error-msg"></p>
+  </div>
+</div>
+
+<div id="main-page" style="display:none;">
+  <header>
+    <h1>Soft Chemistry</h1>
+    <nav>
+      <ul>
+        <li><a href="#home" class="tab-link active">Home</a></li>
+        <li><a href="#homework" class="tab-link">H.W</a></li>
+        <li><a href="#classwork" class="tab-link">Class Work</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section id="home" class="tab-content active">
+      <h2>Welcome to Soft Chemistry</h2>
+    </section>
+    <section id="homework" class="tab-content">
+      <h2>Homework</h2>
+      <div id="hw-section"></div>
+    </section>
+    <section id="classwork" class="tab-content">
+      <h2>Class Work</h2>
+      <div id="cw-section"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Made by Youssef Mahdi</p>
+  </footer>
+</div>
+
+<!-- === Your Firebase module script (inserted exactly as you gave) === -->
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyB8AocsW8ftSDaw53BTcrRpWx5CkO1er38",
+    authDomain: "softchemistry2.firebaseapp.com",
+    projectId: "softchemistry2",
+    storageBucket: "softchemistry2.firebasestorage.app",
+    messagingSenderId: "634814143995",
+    appId: "1:634814143995:web:066d319dfd0352de6e3f5e"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
+<!-- =============================================================== -->
+
+<script>
+// ---------- LOGIN ----------
+let userRole = "";
+
+// Auto-login if student previously logged in
+if(localStorage.getItem("studentLoggedIn") === "true" && localStorage.getItem("studentUsername")){
+  userRole = "student";
+  startSite("student");
+}
+
+function chooseRole(role){
+  userRole = role;
+  document.querySelector(".role-btns").style.display="none";
+  document.getElementById("code-box").style.display="block";
+  if(role === "student"){
+    document.getElementById("student-username-box").style.display="block";
+  }
+}
+
+function login(){
+  const codeInput = document.getElementById("accessCode").value;
+  const error = document.getElementById("error-msg");
+  if(userRole === "student"){
+    const username = document.getElementById("studentUsername").value.trim();
+    if(!username){ error.textContent="❌ Enter a username!"; return; }
+    if(codeInput !== "1884"){ error.textContent="❌ Wrong code!"; return; }
+    localStorage.setItem("studentUsername", username);
+    localStorage.setItem("studentLoggedIn","true");
+    startSite("student");
+  } else if(userRole === "teacher"){
+    if(codeInput !== "3554"){ error.textContent="❌ Wrong code!"; return; }
+    startSite("teacher");
+  }
+}
+
+function startSite(role){
+  document.getElementById("login-page").style.display="none";
+  document.getElementById("main-page").style.display="block";
+  setupTabs();
+  setupRole(role);
+}
+
+// ---------- TABS ----------
+function setupTabs(){
+  const tabs = document.querySelectorAll(".tab-link");
+  const contents = document.querySelectorAll(".tab-content");
+  tabs.forEach(tab=>{
+    tab.addEventListener("click", e=>{
+      e.preventDefault();
+      tabs.forEach(t=>t.classList.remove("active"));
+      contents.forEach(c=>c.classList.remove("active"));
+      tab.classList.add("active");
+      const target = document.querySelector(tab.getAttribute("href"));
+      target.classList.add("active");
+    });
+  });
+}
+
+// ---------- SHARED LOCAL STORAGE ----------
+function setupRole(role){
+  const hw = document.getElementById("hw-section");
+  const cw = document.getElementById("cw-section");
+  const hwKey = "shared-homework";
+  const cwKey = "shared-classwork";
+
+  if(role === "teacher"){
+    hw.innerHTML = `<p>Upload Homework:</p><input type="file" id="hwFile" multiple>
+    <button onclick="uploadFileLS('hwFile','hw-list','${hwKey}')">Upload</button><div id="hw-list"></div>`;
+    cw.innerHTML = `<p>Upload Class Work:</p><input type="file" id="cwFile" multiple>
+    <button onclick="uploadFileLS('cwFile','cw-list','${cwKey}')">Upload</button><div id="cw-list"></div>`;
+    loadFromLS(hwKey,'hw-list');
+    loadFromLS(cwKey,'cw-list');
+  } else {
+    hw.innerHTML = `<p>Submit Homework:</p><input type="file" id="studentHwFile" multiple>
+    <button onclick="uploadFileLS('studentHwFile','hw-submissions','${hwKey}')">Submit</button><div id="hw-submissions"></div>`;
+    cw.innerHTML = `<p>Submit Class Work:</p><input type="file" id="studentCwFile" multiple>
+    <button onclick="uploadFileLS('studentCwFile','cw-submissions','${cwKey}')">Submit</button><div id="cw-submissions"></div>`;
+    loadFromLS(hwKey,'hw-submissions');
+    loadFromLS(cwKey,'cw-submissions');
+  }
+}
+
+function uploadFileLS(inputId,listId,lsKey){
+  const files = document.getElementById(inputId).files;
+  const list = document.getElementById(listId);
+  let saved = JSON.parse(localStorage.getItem(lsKey)||"[]");
+  for(let f of files){
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      saved.push({name:f.name,data:reader.result});
+      localStorage.setItem(lsKey,JSON.stringify(saved));
+      const item = document.createElement("p");
+      const link = document.createElement("a");
+      link.href = reader.result;
+      link.download = f.name;
+      link.textContent = "📄 "+f.name;
+      link.style.color="#66fcf1";
+      item.appendChild(link);
+      list.appendChild(item);
+    };
+    reader.readAsDataURL(f);
+  }
+}
+
+function loadFromLS(lsKey,listId){
+  const list = document.getElementById(listId);
+  const saved = JSON.parse(localStorage.getItem(lsKey)||"[]");
+  for(let f of saved){
+    const item = document.createElement("p");
+    const link = document.createElement("a");
+    link.href=f.data;
+    link.download=f.name;
+    link.textContent="📄 "+f.name;
+    link.style.color="#66fcf1";
+    item.appendChild(link);
+    list.appendChild(item);
+  }
+}
+
+// ---------- ATOMS ANIMATION ----------
+const canvas = document.getElementById("atomCanvas");
+const ctx = canvas.getContext("2d");
+let atoms = [];
+function resizeCanvas(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+window.addEventListener("resize",resizeCanvas);
+resizeCanvas();
+
+class Atom{
+  constructor(x,y){ this.x=x; this.y=y; this.size=Math.random()*4+2; this.speedX=(Math.random()-0.5)*2; this.speedY=(Math.random()-0.5)*2; }
+  update(){ this.x+=this.speedX; this.y+=this.speedY; if(this.x<0||this.x>canvas.width)this.speedX*=-1; if(this.y<0||this.y>canvas.height)this.speedY*=-1; }
+  draw(){ ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fillStyle="rgba(0,255,255,0.6)"; ctx.fill(); }
+}
+for(let i=0;i<50;i++) atoms.push(new Atom(Math.random()*canvas.width,Math.random()*canvas.height));
+function animate(){ ctx.clearRect(0,0,canvas.width,canvas.height); atoms.forEach(a=>{ a.update(); a.draw(); }); requestAnimationFrame(animate); }
+animate();
+canvas.addEventListener("click",e=>{ for(let i=0;i<5;i++) atoms.push(new Atom(e.clientX,e.clientY)); });
+</script>
+</body>
+</html>
